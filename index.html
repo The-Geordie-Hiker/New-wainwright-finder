@@ -68,6 +68,7 @@
             try {
                 // Replace 'YOUR_API_KEY' with your actual OpenWeatherMap API key
                 const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=YOUR_API_KEY&units=metric`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 const weatherCode = data.weather[0].id;
                 const cloudCover = data.clouds.all; // 0-100%
@@ -90,20 +91,20 @@
                 return { weather, sunsetProbability };
             } catch (error) {
                 console.error(`Error fetching weather for lat:${lat}, lon:${lon}`, error);
-                return { weather: "Unknown", sunsetProbability: 0 };
+                return { weather: "Error", sunsetProbability: 0 };
             }
         }
 
         async function updateWeather() {
             const weatherPromises = allWainwrights.map(async (wainwright) => {
-                const { weather, sunsetProbability } = await fetchWeather(wainwright.lat, wainwright.lon);
-                wainwright.weather = weather;
-                wainwright.sunsetProbability = sunsetProbability;
+                const result = await fetchWeather(wainwright.lat, wainwright.lon);
+                wainwright.weather = result.weather;
+                wainwright.sunsetProbability = result.sunsetProbability;
             });
             const topWeatherPromises = topWainwrights.map(async (wainwright) => {
-                const { weather, sunsetProbability } = await fetchWeather(wainwright.lat, wainwright.lon);
-                wainwright.weather = weather;
-                wainwright.sunsetProbability = sunsetProbability;
+                const result = await fetchWeather(wainwright.lat, wainwright.lon);
+                wainwright.weather = result.weather;
+                wainwright.sunsetProbability = result.sunsetProbability;
             });
             await Promise.all([...weatherPromises, ...topWeatherPromises]);
         }
